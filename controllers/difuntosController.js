@@ -2,10 +2,19 @@ import sql from "../config/supabase.js";
 import { formatFecha } from "../utils/fechas.js";
 
 export const obtenerDifuntos = async (req, res) => {
-  // Las fechas se devuelven tal cual están en la base de datos, sin formatear
+  const limit = parseInt(req.query.limit) || 10;
+  const offset = parseInt(req.query.offset) || 0;
   try {
-    const difuntos = await sql`SELECT * FROM cem_difuntos`;
-    res.json(difuntos);
+    const difuntos = await sql`
+      SELECT * FROM cem_difuntos
+      ORDER BY dif_id DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+    const total = await sql`SELECT COUNT(*) FROM cem_difuntos`;
+    res.json({
+      data: difuntos,
+      total: Number(total[0].count),
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
