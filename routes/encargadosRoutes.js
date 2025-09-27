@@ -1,4 +1,3 @@
-// routes/encargadosRoutes.js
 import express from "express";
 import {
   obtenerEncargados,
