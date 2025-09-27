@@ -1,4 +1,3 @@
-// models/encargado.js
 export default {
   enc_id: Number,
   enc_primer_nombre: String,

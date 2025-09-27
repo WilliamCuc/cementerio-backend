@@ -1,5 +1,3 @@
-// utils/fechas.js
-
 export function formatFecha(fecha) {
   if (!fecha) return "";
   return new Date(fecha).toLocaleDateString("es-ES", {

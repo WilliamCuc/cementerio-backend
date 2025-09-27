@@ -1,4 +1,3 @@
-// controllers/encargadosController.js
 import sql from "../config/supabase.js";
 
 export const obtenerEncargados = async (req, res) => {

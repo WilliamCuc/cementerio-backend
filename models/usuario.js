@@ -1,4 +1,3 @@
-// Modelo de referencia para cem_usuarios
 export default {
   usu_id: Number,
   usu_usuario: String,
