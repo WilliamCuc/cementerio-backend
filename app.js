@@ -7,12 +7,14 @@ import encargadosRoutes from "./routes/encargadosRoutes.js";
 import locacionesRoutes from "./routes/locacionesRoutes.js";
 import panteonesRoutes from "./routes/panteonesRoutes.js";
 import espaciosRoutes from "./routes/espaciosRoutes.js";
+import estadosRoutes from "./routes/estadosRoutes.js";
 
 const app = express();
 const port = 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/usuarios", usuariosRoutes);
 app.use("/api/difuntos", difuntosRoutes);
@@ -20,6 +22,7 @@ app.use("/api/encargados", encargadosRoutes);
 app.use("/api/locaciones", locacionesRoutes);
 app.use("/api/panteones", panteonesRoutes);
 app.use("/api/espacios", espaciosRoutes);
+app.use("/api/estados", estadosRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
