@@ -8,6 +8,7 @@ import locacionesRoutes from "./routes/locacionesRoutes.js";
 import panteonesRoutes from "./routes/panteonesRoutes.js";
 import espaciosRoutes from "./routes/espaciosRoutes.js";
 import estadosRoutes from "./routes/estadosRoutes.js";
+import transaccionesRoutes from "./routes/transaccionesRoutes.js";
 
 const app = express();
 const port = 3000;
@@ -23,6 +24,7 @@ app.use("/api/locaciones", locacionesRoutes);
 app.use("/api/panteones", panteonesRoutes);
 app.use("/api/espacios", espaciosRoutes);
 app.use("/api/estados", estadosRoutes);
+app.use("/api/transacciones", transaccionesRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
