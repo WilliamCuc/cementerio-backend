@@ -11,6 +11,7 @@ import estadosRoutes from "./routes/estadosRoutes.js";
 import transaccionesRoutes from "./routes/transaccionesRoutes.js";
 import reportesRoutes from "./routes/reportesRoutes.js";
 import deudoresRoutes from "./routes/deudoresRoutes.js";
+import movimientosRoutes from "./routes/movimientosRoutes.js";
 
 const app = express();
 const port = 3000;
@@ -29,6 +30,7 @@ app.use("/api/estados", estadosRoutes);
 app.use("/api/transacciones", transaccionesRoutes);
 app.use("/api/reportes", reportesRoutes);
 app.use("/api/deudores", deudoresRoutes);
+app.use("/api/movimientos", movimientosRoutes);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
