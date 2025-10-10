@@ -3,15 +3,46 @@ import sql from "../config/supabase.js";
 export const obtenerPanteones = async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
   const offset = parseInt(req.query.offset) || 0;
+  const { descripcion, locacion } = req.query;
+
   try {
-    const panteones = await sql`
+    let baseQuery = `
       SELECT p.*, l.loc_area
       FROM cem_panteones p
       LEFT JOIN cem_locacion l ON p.pan_locacion_id = l.loc_id
-      ORDER BY p.pan_id DESC
-      LIMIT ${limit} OFFSET ${offset}
+      WHERE 1=1
     `;
-    const total = await sql`SELECT COUNT(*) FROM cem_panteones`;
+    let countQuery = `
+      SELECT COUNT(*) 
+      FROM cem_panteones p
+      LEFT JOIN cem_locacion l ON p.pan_locacion_id = l.loc_id
+      WHERE 1=1
+    `;
+    const params = [];
+    let paramIndex = 1;
+
+    if (descripcion) {
+      const descripcionBusqueda = `%${descripcion}%`;
+      baseQuery += ` AND p.pan_descripcion ILIKE $${paramIndex}`;
+      countQuery += ` AND p.pan_descripcion ILIKE $${paramIndex}`;
+      params.push(descripcionBusqueda);
+      paramIndex++;
+    }
+
+    if (locacion) {
+      const locacionBusqueda = `%${locacion}%`;
+      baseQuery += ` AND l.loc_area ILIKE $${paramIndex}`;
+      countQuery += ` AND l.loc_area ILIKE $${paramIndex}`;
+      params.push(locacionBusqueda);
+      paramIndex++;
+    }
+
+    baseQuery += ` ORDER BY p.pan_id DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    params.push(limit, offset);
+
+    const panteones = await sql.unsafe(baseQuery, params);
+    const total = await sql.unsafe(countQuery, params.slice(0, -2));
+
     res.json({
       data: panteones,
       total: Number(total[0].count),

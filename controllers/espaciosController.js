@@ -3,16 +3,62 @@ import sql from "../config/supabase.js";
 export const obtenerEspacios = async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
   const offset = parseInt(req.query.offset) || 0;
+  const { tipo, ocupado, locacion, noEspacio } = req.query;
+
   try {
-    const espacios = await sql`
+    let baseQuery = `
       SELECT e.*, l.loc_area, p.pan_no_panteon
       FROM cem_espacios e
       JOIN cem_locacion l ON e.esp_locacion = l.loc_id
       LEFT JOIN cem_panteones p ON e.esp_panteon = p.pan_id
-      ORDER BY e.esp_id DESC
-      LIMIT ${limit} OFFSET ${offset}
+      WHERE 1=1
     `;
-    const total = await sql`SELECT COUNT(*) FROM cem_espacios`;
+    let countQuery = `
+      SELECT COUNT(*) 
+      FROM cem_espacios e
+      JOIN cem_locacion l ON e.esp_locacion = l.loc_id
+      WHERE 1=1
+    `;
+    const params = [];
+    let paramIndex = 1;
+
+    if (tipo) {
+      baseQuery += ` AND e.esp_espacio = $${paramIndex}`;
+      countQuery += ` AND e.esp_espacio = $${paramIndex}`;
+      params.push(tipo);
+      paramIndex++;
+    }
+
+    if (ocupado !== undefined && ocupado !== '') {
+      const ocupadoBool = ocupado === 'true';
+      baseQuery += ` AND e.esp_ocupado = $${paramIndex}`;
+      countQuery += ` AND e.esp_ocupado = $${paramIndex}`;
+      params.push(ocupadoBool);
+      paramIndex++;
+    }
+
+    if (locacion) {
+      const locacionBusqueda = `%${locacion}%`;
+      baseQuery += ` AND l.loc_area ILIKE $${paramIndex}`;
+      countQuery += ` AND l.loc_area ILIKE $${paramIndex}`;
+      params.push(locacionBusqueda);
+      paramIndex++;
+    }
+
+    if (noEspacio) {
+      const noEspacioBusqueda = `%${noEspacio}%`;
+      baseQuery += ` AND e.esp_no_espacio ILIKE $${paramIndex}`;
+      countQuery += ` AND e.esp_no_espacio ILIKE $${paramIndex}`;
+      params.push(noEspacioBusqueda);
+      paramIndex++;
+    }
+
+    baseQuery += ` ORDER BY e.esp_id DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    params.push(limit, offset);
+
+    const espacios = await sql.unsafe(baseQuery, params);
+    const total = await sql.unsafe(countQuery, params.slice(0, -2));
+
     res.json({
       data: espacios,
       total: Number(total[0].count),

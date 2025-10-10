@@ -3,16 +3,60 @@ import sql from "../config/supabase.js";
 export const obtenerTransacciones = async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
   const offset = parseInt(req.query.offset) || 0;
+  const { documento, fechaInicio, fechaFin, tipo } = req.query;
+
   try {
-    const transacciones = await sql`
+    let baseQuery = `
       SELECT t.*, e.esp_no_espacio, e.esp_espacio, l.loc_area
       FROM cem_transacciones t
       JOIN cem_espacios e ON t.tra_espacios = e.esp_id
       JOIN cem_locacion l ON e.esp_locacion = l.loc_id
-      ORDER BY t.tra_id DESC
-      LIMIT ${limit} OFFSET ${offset}
+      WHERE 1=1
     `;
-    const total = await sql`SELECT COUNT(*) FROM cem_transacciones`;
+    let countQuery = `
+      SELECT COUNT(*) 
+      FROM cem_transacciones t
+      JOIN cem_espacios e ON t.tra_espacios = e.esp_id
+      WHERE 1=1
+    `;
+    const params = [];
+    let paramIndex = 1;
+
+    if (documento) {
+      const documentoBusqueda = `%${documento}%`;
+      baseQuery += ` AND t.tra_documento ILIKE $${paramIndex}`;
+      countQuery += ` AND t.tra_documento ILIKE $${paramIndex}`;
+      params.push(documentoBusqueda);
+      paramIndex++;
+    }
+
+    if (fechaInicio) {
+      baseQuery += ` AND t.tra_fecha_pago >= $${paramIndex}`;
+      countQuery += ` AND t.tra_fecha_pago >= $${paramIndex}`;
+      params.push(fechaInicio);
+      paramIndex++;
+    }
+
+    if (fechaFin) {
+      baseQuery += ` AND t.tra_fecha_pago <= $${paramIndex}`;
+      countQuery += ` AND t.tra_fecha_pago <= $${paramIndex}`;
+      params.push(fechaFin);
+      paramIndex++;
+    }
+
+    if (tipo) {
+      baseQuery += ` AND e.esp_espacio = $${paramIndex}`;
+      countQuery += ` AND e.esp_espacio = $${paramIndex}`;
+      params.push(tipo);
+      paramIndex++;
+    }
+
+    baseQuery += ` ORDER BY t.tra_id DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    params.push(limit, offset);
+
+    const transacciones = await sql.unsafe(baseQuery, params);
+    const total = await sql.unsafe(countQuery, params.slice(0, -2));
+
     res.json({
       data: transacciones,
       total: Number(total[0].count),

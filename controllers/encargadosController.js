@@ -3,13 +3,42 @@ import sql from "../config/supabase.js";
 export const obtenerEncargados = async (req, res) => {
   const limit = parseInt(req.query.limit) || 10;
   const offset = parseInt(req.query.offset) || 0;
+  const { dpi, telefono, nombre } = req.query;
+
   try {
-    const encargados = await sql`
-      SELECT * FROM cem_encargado
-      ORDER BY enc_id DESC
-      LIMIT ${limit} OFFSET ${offset}
-    `;
-    const total = await sql`SELECT COUNT(*) FROM cem_encargado`;
+    let baseQuery = 'SELECT * FROM cem_encargado WHERE 1=1';
+    let countQuery = 'SELECT COUNT(*) FROM cem_encargado WHERE 1=1';
+    const params = [];
+    let paramIndex = 1;
+
+    if (dpi) {
+      baseQuery += ` AND enc_dpi = $${paramIndex}`;
+      countQuery += ` AND enc_dpi = $${paramIndex}`;
+      params.push(dpi);
+      paramIndex++;
+    }
+
+    if (telefono) {
+      baseQuery += ` AND (enc_telefono_uno = $${paramIndex} OR enc_telefono_dos = $${paramIndex})`;
+      countQuery += ` AND (enc_telefono_uno = $${paramIndex} OR enc_telefono_dos = $${paramIndex})`;
+      params.push(telefono);
+      paramIndex++;
+    }
+
+    if (nombre) {
+      const nombreBusqueda = `%${nombre}%`;
+      baseQuery += ` AND (CONCAT(enc_primer_nombre, ' ', COALESCE(enc_segundo_nombre, ''), ' ', enc_primer_apellido, ' ', COALESCE(enc_segundo_apellido, '')) ILIKE $${paramIndex})`;
+      countQuery += ` AND (CONCAT(enc_primer_nombre, ' ', COALESCE(enc_segundo_nombre, ''), ' ', enc_primer_apellido, ' ', COALESCE(enc_segundo_apellido, '')) ILIKE $${paramIndex})`;
+      params.push(nombreBusqueda);
+      paramIndex++;
+    }
+
+    baseQuery += ` ORDER BY enc_id DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    params.push(limit, offset);
+
+    const encargados = await sql.unsafe(baseQuery, params);
+    const total = await sql.unsafe(countQuery, params.slice(0, -2));
+
     res.json({
       data: encargados,
       total: Number(total[0].count),
