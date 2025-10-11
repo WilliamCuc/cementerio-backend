@@ -14,9 +14,18 @@ import deudoresRoutes from "./routes/deudoresRoutes.js";
 import movimientosRoutes from "./routes/movimientosRoutes.js";
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    process.env.FRONTEND_URL || "*"
+  ],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -33,9 +42,24 @@ app.use("/api/deudores", deudoresRoutes);
 app.use("/api/movimientos", movimientosRoutes);
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.json({
+    message: "API Cementerio funcionando correctamente",
+    version: "1.0.0",
+    environment: process.env.NODE_ENV || "development"
+  });
 });
 
-app.listen(port, () => {
-  console.log(`Escuchando en puerto ${port}`);
+app.get("/api/health", (req, res) => {
+  res.json({ 
+    status: "OK", 
+    timestamp: new Date().toISOString() 
+  });
 });
+
+export default app;
+
+if (process.env.NODE_ENV !== "production") {
+  app.listen(port, () => {
+    console.log(`Escuchando en puerto ${port}`);
+  });
+}
